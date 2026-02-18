@@ -54,7 +54,9 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/webhook2",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		got, err := store.GetEndpointBySlug("slug-test")
 		if err != nil {
@@ -82,7 +84,9 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/queue",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		webhook := &domain.Webhook{
 			EndpointID: endpoint.ID,
@@ -125,20 +129,28 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/delivered",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		webhook := &domain.Webhook{
 			EndpointID: endpoint.ID,
 			Payload:    []byte(`{"event":"delivered"}`),
 		}
-		delivery, _ := store.Enqueue(webhook, endpoint)
+		delivery, err := store.Enqueue(webhook, endpoint)
+		if err != nil {
+			t.Fatalf("failed to enqueue: %v", err)
+		}
 
-		err := store.MarkDelivered(delivery.ID, 200, "OK")
+		err = store.MarkDelivered(delivery.ID, 200, "OK")
 		if err != nil {
 			t.Fatalf("failed to mark delivered: %v", err)
 		}
 
-		got, _ := store.GetDelivery(delivery.ID)
+		got, err := store.GetDelivery(delivery.ID)
+		if err != nil {
+			t.Fatalf("failed to get delivery: %v", err)
+		}
 		if got.Status != domain.StatusDelivered {
 			t.Errorf("expected status %q, got %q", domain.StatusDelivered, got.Status)
 		}
@@ -151,22 +163,30 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/failed",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		webhook := &domain.Webhook{
 			EndpointID: endpoint.ID,
 			Payload:    []byte(`{"event":"failed"}`),
 		}
-		delivery, _ := store.Enqueue(webhook, endpoint)
+		delivery, err := store.Enqueue(webhook, endpoint)
+		if err != nil {
+			t.Fatalf("failed to enqueue: %v", err)
+		}
 
 		nextRetry := time.Now().Add(time.Hour)
 		responseCode := 500
-		err := store.MarkFailed(delivery.ID, nil, &responseCode, &nextRetry)
+		err = store.MarkFailed(delivery.ID, nil, &responseCode, &nextRetry)
 		if err != nil {
 			t.Fatalf("failed to mark failed: %v", err)
 		}
 
-		got, _ := store.GetDelivery(delivery.ID)
+		got, err := store.GetDelivery(delivery.ID)
+		if err != nil {
+			t.Fatalf("failed to get delivery: %v", err)
+		}
 		if got.Status != domain.StatusFailed {
 			t.Errorf("expected status %q, got %q", domain.StatusFailed, got.Status)
 		}
@@ -179,20 +199,28 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/dead",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		webhook := &domain.Webhook{
 			EndpointID: endpoint.ID,
 			Payload:    []byte(`{"event":"dead"}`),
 		}
-		delivery, _ := store.Enqueue(webhook, endpoint)
+		delivery, err := store.Enqueue(webhook, endpoint)
+		if err != nil {
+			t.Fatalf("failed to enqueue: %v", err)
+		}
 
-		err := store.MarkDead(delivery.ID, "max retries exceeded")
+		err = store.MarkDead(delivery.ID, "max retries exceeded")
 		if err != nil {
 			t.Fatalf("failed to mark dead: %v", err)
 		}
 
-		got, _ := store.GetDelivery(delivery.ID)
+		got, err := store.GetDelivery(delivery.ID)
+		if err != nil {
+			t.Fatalf("failed to get delivery: %v", err)
+		}
 		if got.Status != domain.StatusDead {
 			t.Errorf("expected status %q, got %q", domain.StatusDead, got.Status)
 		}
@@ -205,21 +233,31 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/retry",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint)
+		if err := store.CreateEndpoint(endpoint); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		webhook := &domain.Webhook{
 			EndpointID: endpoint.ID,
 			Payload:    []byte(`{"event":"retry"}`),
 		}
-		delivery, _ := store.Enqueue(webhook, endpoint)
-		store.MarkDead(delivery.ID, "test")
+		delivery, err := store.Enqueue(webhook, endpoint)
+		if err != nil {
+			t.Fatalf("failed to enqueue: %v", err)
+		}
+		if err := store.MarkDead(delivery.ID, "test"); err != nil {
+			t.Fatalf("failed to mark dead: %v", err)
+		}
 
-		err := store.RetryDelivery(delivery.ID)
+		err = store.RetryDelivery(delivery.ID)
 		if err != nil {
 			t.Fatalf("failed to retry delivery: %v", err)
 		}
 
-		got, _ := store.GetDelivery(delivery.ID)
+		got, err := store.GetDelivery(delivery.ID)
+		if err != nil {
+			t.Fatalf("failed to get delivery: %v", err)
+		}
 		if got.Status != domain.StatusPending {
 			t.Errorf("expected status %q, got %q", domain.StatusPending, got.Status)
 		}
@@ -242,7 +280,9 @@ func TestSQLiteStore(t *testing.T) {
 			TargetURL: "http://example.com/dup1",
 			Active:    true,
 		}
-		store.CreateEndpoint(endpoint1)
+		if err := store.CreateEndpoint(endpoint1); err != nil {
+			t.Fatalf("failed to create endpoint: %v", err)
+		}
 
 		endpoint2 := &domain.Endpoint{
 			Name:      "Dup Test 2",

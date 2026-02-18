@@ -78,9 +78,9 @@ Create a `.env` file or set environment variables:
 PORT=8080                    # HTTP server port
 DATABASE_URL=hookrelay.db    # SQLite database path
 MAX_RETRIES=5                # Maximum delivery attempts
-RETRY_DELAY=1s               # Initial retry delay
 DELIVERY_TIMEOUT=30s         # HTTP delivery timeout
-POLL_INTERVAL=100ms          # Queue polling interval
+WORKER_INTERVAL=5s           # Queue polling interval
+RETRY_BACKOFF_BASE=30        # Base backoff delay in seconds
 ```
 
 ### Running
@@ -104,7 +104,7 @@ Receive and queue a webhook for delivery.
 ```bash
 curl -X POST http://localhost:8080/webhooks/my-endpoint \
   -H "Content-Type: application/json" \
-  -H "X-Hub-Signature-256: sha256=<signature>" \
+  -H "X-Hook-Signature: sha256=<signature>" \
   -d '{"event": "push", "data": {}}'
 ```
 
@@ -169,11 +169,11 @@ curl -X POST http://localhost:8080/admin/endpoints \
 
 ## Signature Verification
 
-HookRelay supports HMAC-SHA256 signature verification for incoming webhooks. When an endpoint has a `secret` configured, incoming requests must include a valid signature in the `X-Hub-Signature-256` header.
+HookRelay supports HMAC-SHA256 signature verification for incoming webhooks. When an endpoint has a `secret` configured, incoming requests must include a valid signature in the `X-Hook-Signature` header.
 
 **Signature Format:**
 ```
-X-Hub-Signature-256: sha256=<hex-encoded-hmac>
+X-Hook-Signature: sha256=<hex-encoded-hmac>
 ```
 
 **Verification Process:**
@@ -186,15 +186,17 @@ Outgoing deliveries include the same signature header computed with the endpoint
 
 ## Retry Logic
 
-Failed deliveries are retried with exponential backoff:
+Failed deliveries are retried with exponential backoff and jitter:
 
-| Attempt | Delay |
-|---------|-------|
-| 1 | 1s |
-| 2 | 2s |
-| 3 | 4s |
-| 4 | 8s |
-| 5 | 16s |
+| Attempt | Base Delay | Actual |
+|---------|-----------|--------|
+| 1 | 60s | ~60s + jitter |
+| 2 | 120s | ~120s + jitter |
+| 3 | 240s | ~240s + jitter |
+| 4 | 480s | ~480s + jitter |
+| 5 | 960s | ~960s + jitter |
+
+Delays are calculated as `RETRY_BACKOFF_BASE × 2^attempt` with ±10% jitter added.
 
 After `MAX_RETRIES` failures, the delivery is moved to the Dead Letter Queue (DLQ) for manual inspection and retry.
 

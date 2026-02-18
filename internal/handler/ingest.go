@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -55,7 +56,7 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read payload
-	payload, err := io.ReadAll(io.LimitReader(r.Body, 10*1024*1024)) // 10MB limit
+	payload, err := io.ReadAll(io.LimitReader(r.Body, domain.MaxRequestBodySize))
 	if err != nil {
 		h.logger.Error("reading payload", "error", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to read payload"})
@@ -72,14 +73,20 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Extract headers
+	// Extract and filter headers
 	headers := make(map[string]string)
 	for key, values := range r.Header {
 		if len(values) > 0 {
 			headers[key] = values[0]
 		}
 	}
-	headersJSON, _ := json.Marshal(headers)
+	headers = filterHeaders(headers)
+	headersJSON, err := json.Marshal(headers)
+	if err != nil {
+		h.logger.Error("marshaling headers", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to process headers"})
+		return
+	}
 
 	// Create webhook
 	webhook := &domain.Webhook{
@@ -113,5 +120,9 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		// Response is already partially written; log would need a logger.
+		// Best-effort: the status code is already sent.
+		fmt.Fprintf(w, `{"error":"failed to encode response"}`)
+	}
 }

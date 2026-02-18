@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/devaloi/hookrelay/internal/domain"
@@ -103,15 +102,14 @@ func (h *AdminHandler) handleEndpoint(w http.ResponseWriter, r *http.Request, id
 }
 
 func (h *AdminHandler) handleDeliveries(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if limit <= 0 {
-		limit = 50
+	limit, offset, err := parsePagination(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	var status *domain.DeliveryStatus
 	if s := r.URL.Query().Get("status"); s != "" {
@@ -129,8 +127,7 @@ func (h *AdminHandler) handleDeliveries(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *AdminHandler) handleDelivery(w http.ResponseWriter, r *http.Request, id string) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	delivery, err := h.store.GetDelivery(id)
@@ -142,8 +139,7 @@ func (h *AdminHandler) handleDelivery(w http.ResponseWriter, r *http.Request, id
 }
 
 func (h *AdminHandler) handleRetryDelivery(w http.ResponseWriter, r *http.Request, id string) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 	if err := h.store.RetryDelivery(id); err != nil {
@@ -155,15 +151,14 @@ func (h *AdminHandler) handleRetryDelivery(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *AdminHandler) handleDLQ(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if limit <= 0 {
-		limit = 50
+	limit, offset, err := parsePagination(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
 	}
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
 	deliveries, err := h.store.ListDeadLetters(limit, offset)
 	if err != nil {
@@ -175,8 +170,7 @@ func (h *AdminHandler) handleDLQ(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) handleRetryDLQ(w http.ResponseWriter, r *http.Request, id string) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 	if err := h.store.RetryDelivery(id); err != nil {
@@ -199,8 +193,7 @@ func NewStatsHandler(store queue.Store, logger *slog.Logger) *StatsHandler {
 }
 
 func (h *StatsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 	stats, err := h.store.Stats()

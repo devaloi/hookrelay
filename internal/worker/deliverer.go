@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/devaloi/hookrelay/internal/config"
 	"github.com/devaloi/hookrelay/internal/domain"
@@ -35,7 +36,7 @@ func NewDeliverer(cfg *config.Config, logger *slog.Logger) *Deliverer {
 		client: &http.Client{
 			Timeout: cfg.DeliveryTimeout,
 			CheckRedirect: func(_ *http.Request, via []*http.Request) error {
-				if len(via) >= 3 {
+				if len(via) >= domain.MaxRedirects {
 					return fmt.Errorf("too many redirects")
 				}
 				return nil
@@ -48,10 +49,17 @@ func NewDeliverer(cfg *config.Config, logger *slog.Logger) *Deliverer {
 
 // Deliver attempts to deliver a webhook to its target endpoint.
 func (d *Deliverer) Deliver(item *domain.DeliveryWithWebhook) *DeliveryResult {
+	// SSRF protection: only allow http and https schemes
+	targetURL := item.Endpoint.TargetURL
+	lower := strings.ToLower(targetURL)
+	if !strings.HasPrefix(lower, "http://") && !strings.HasPrefix(lower, "https://") {
+		return &DeliveryResult{Success: false, Error: fmt.Errorf("disallowed URL scheme in %q: only http and https are allowed", targetURL)}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), d.cfg.DeliveryTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, item.Endpoint.TargetURL, bytes.NewReader(item.Webhook.Payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, targetURL, bytes.NewReader(item.Webhook.Payload))
 	if err != nil {
 		return &DeliveryResult{Success: false, Error: fmt.Errorf("creating request: %w", err)}
 	}
@@ -72,7 +80,7 @@ func (d *Deliverer) Deliver(item *domain.DeliveryWithWebhook) *DeliveryResult {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, domain.MaxResponseBodySize))
 	if err != nil {
 		body = []byte(fmt.Sprintf("error reading body: %v", err))
 	}

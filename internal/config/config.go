@@ -5,6 +5,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/devaloi/hookrelay/internal/domain"
 )
 
 // Config holds all configuration for the application.
@@ -30,7 +32,7 @@ func Load() *Config {
 		MaxRetries:       getEnvInt("MAX_RETRIES", 5),
 		WorkerInterval:   getEnvDuration("WORKER_INTERVAL", 5*time.Second),
 		DeliveryTimeout:  getEnvDuration("DELIVERY_TIMEOUT", 30*time.Second),
-		RetryBackoffBase: getEnvInt("RETRY_BACKOFF_BASE", 30),
+		RetryBackoffBase: getEnvInt("RETRY_BACKOFF_BASE", domain.RetryBackoffBase),
 	}
 }
 

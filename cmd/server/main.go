@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/devaloi/hookrelay/internal/config"
+	"github.com/devaloi/hookrelay/internal/domain"
 	"github.com/devaloi/hookrelay/internal/handler"
 	"github.com/devaloi/hookrelay/internal/middleware"
 	"github.com/devaloi/hookrelay/internal/queue"
@@ -58,9 +58,9 @@ func main() {
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      h,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  domain.ReadTimeout,
+		WriteTimeout: domain.WriteTimeout,
+		IdleTimeout:  domain.IdleTimeout,
 	}
 
 	go func() {
@@ -76,7 +76,7 @@ func main() {
 	<-quit
 
 	logger.Info("shutting down gracefully")
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), domain.ShutdownTimeout)
 	defer shutdownCancel()
 
 	dispatcher.Stop()

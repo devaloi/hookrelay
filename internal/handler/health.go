@@ -23,8 +23,7 @@ func NewHealthHandler(store queue.Store, logger *slog.Logger) *HealthHandler {
 
 // ServeHTTP handles GET /health requests.
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
 

@@ -63,7 +63,7 @@ type QueueStats struct {
 	Delivered     int64   `json:"delivered"`
 	Failed        int64   `json:"failed"`
 	Dead          int64   `json:"dead"`
-	TotalDeliverd int64   `json:"total_delivered"`
+	TotalDelivered int64  `json:"total_delivered"`
 	SuccessRate   float64 `json:"success_rate"`
 }
 

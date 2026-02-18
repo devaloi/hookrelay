@@ -31,7 +31,9 @@ func TestDeliverer(t *testing.T) {
 				t.Error("expected X-Hook-ID header")
 			}
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
+			if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
+				t.Errorf("unexpected write error: %v", err)
+			}
 		}))
 		defer server.Close()
 
@@ -55,7 +57,9 @@ func TestDeliverer(t *testing.T) {
 	t.Run("server returns 500", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(`{"error":"internal error"}`))
+			if _, err := w.Write([]byte(`{"error":"internal error"}`)); err != nil {
+				t.Errorf("unexpected write error: %v", err)
+			}
 		}))
 		defer server.Close()
 

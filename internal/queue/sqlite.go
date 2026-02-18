@@ -22,7 +22,7 @@ type SQLiteStore struct {
 
 // NewSQLiteStore creates a new SQLite-backed store.
 func NewSQLiteStore(databaseURL string) (*SQLiteStore, error) {
-	db, err := sql.Open("sqlite3", databaseURL+"?_journal_mode=WAL&_busy_timeout=5000&_foreign_keys=ON")
+	db, err := sql.Open("sqlite3", fmt.Sprintf("%s?_journal_mode=WAL&_busy_timeout=%d&_foreign_keys=ON", databaseURL, domain.SQLiteBusyTimeout))
 	if err != nil {
 		return nil, fmt.Errorf("opening database: %w", err)
 	}
@@ -384,7 +384,7 @@ func (s *SQLiteStore) MarkDelivered(id string, responseCode int, responseBody st
 	defer s.mu.Unlock()
 
 	now := time.Now().UTC()
-	truncatedBody := truncateString(responseBody, 1000)
+	truncatedBody := truncateString(responseBody, domain.ResponseBodyTruncation)
 
 	result, err := s.db.Exec(`
 		UPDATE deliveries 
@@ -615,7 +615,7 @@ func (s *SQLiteStore) Stats() (*domain.QueueStats, error) {
 		return nil, fmt.Errorf("querying stats: %w", err)
 	}
 
-	stats.TotalDeliverd = stats.Delivered
+	stats.TotalDelivered = stats.Delivered
 	total := stats.Delivered + stats.Failed + stats.Dead
 	if total > 0 {
 		stats.SuccessRate = float64(stats.Delivered) / float64(total) * 100
