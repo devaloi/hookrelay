@@ -27,6 +27,9 @@ lint: fmt vet ## Run linters
 
 ## Test commands
 test: ## Run tests
+	$(GO) test -v ./...
+
+test-race: ## Run tests with race detector
 	$(GO) test -v -race ./...
 
 test-coverage: ## Run tests with coverage

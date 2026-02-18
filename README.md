@@ -1,9 +1,22 @@
 # HookRelay
 
+[![CI](https://github.com/devaloi/hookrelay/actions/workflows/ci.yml/badge.svg)](https://github.com/devaloi/hookrelay/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.22-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A lightweight webhook relay service that receives, queues, and reliably delivers webhooks with signature verification and exponential backoff retry logic.
+
+## Why HookRelay?
+
+Modern applications need reliable webhook delivery. HookRelay solves common webhook challenges:
+
+- **At-least-once delivery** - Webhooks are persisted before acknowledgment, never lost
+- **Automatic retries** - Failed deliveries retry with exponential backoff
+- **Signature verification** - HMAC-SHA256 ensures webhook authenticity
+- **Dead Letter Queue** - Failed webhooks preserved for debugging and manual retry
+- **Zero external dependencies** - SQLite storage, no Redis/Postgres/RabbitMQ required
+
+Built with Go's stdlib for minimal footprint and maximum reliability.
 
 ## Features
 
