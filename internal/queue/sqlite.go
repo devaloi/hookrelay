@@ -450,7 +450,7 @@ func (s *SQLiteStore) MarkFailed(id string, deliveryErr error, responseCode *int
 }
 
 // MarkDead moves a delivery to the dead letter queue.
-func (s *SQLiteStore) MarkDead(id string, reason string) error {
+func (s *SQLiteStore) MarkDead(id, reason string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

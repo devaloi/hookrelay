@@ -14,7 +14,7 @@ import (
 	"github.com/devaloi/hookrelay/internal/signature"
 )
 
-func setupTestStore(t *testing.T) (*queue.SQLiteStore, func()) {
+func setupTestStore(t *testing.T) (*queue.SQLiteStore, func()) { //nolint:gocritic // unnamedResult is fine for test helpers
 	t.Helper()
 	tmpFile, err := os.CreateTemp("", "handler_test_*.db")
 	if err != nil {
@@ -85,7 +85,7 @@ func TestIngestHandler(t *testing.T) {
 	})
 
 	t.Run("method not allowed", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/webhooks/test-ingest", nil)
+		req := httptest.NewRequest(http.MethodGet, "/webhooks/test-ingest", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -96,7 +96,7 @@ func TestIngestHandler(t *testing.T) {
 	})
 
 	t.Run("missing endpoint slug", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/webhooks/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/webhooks/", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -175,7 +175,7 @@ func TestHealthHandler(t *testing.T) {
 	handler := NewHealthHandler(store, logger)
 
 	t.Run("healthy", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/health", nil)
+		req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -191,7 +191,7 @@ func TestHealthHandler(t *testing.T) {
 	})
 
 	t.Run("method not allowed", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/health", nil)
+		req := httptest.NewRequest(http.MethodPost, "/health", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -221,7 +221,7 @@ func TestAdminHandler(t *testing.T) {
 			t.Errorf("expected status 201, got %d: %s", rec.Code, rec.Body.String())
 		}
 
-		req = httptest.NewRequest(http.MethodGet, "/admin/endpoints", nil)
+		req = httptest.NewRequest(http.MethodGet, "/admin/endpoints", http.NoBody)
 		rec = httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -232,7 +232,7 @@ func TestAdminHandler(t *testing.T) {
 	})
 
 	t.Run("list deliveries", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/admin/deliveries", nil)
+		req := httptest.NewRequest(http.MethodGet, "/admin/deliveries", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -243,7 +243,7 @@ func TestAdminHandler(t *testing.T) {
 	})
 
 	t.Run("list DLQ", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/admin/dlq", nil)
+		req := httptest.NewRequest(http.MethodGet, "/admin/dlq", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -262,7 +262,7 @@ func TestStatsHandler(t *testing.T) {
 	handler := NewStatsHandler(store, logger)
 
 	t.Run("get stats", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/stats", nil)
+		req := httptest.NewRequest(http.MethodGet, "/stats", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
