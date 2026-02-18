@@ -1,3 +1,4 @@
+// Package worker provides the delivery dispatcher and HTTP deliverer for the webhook relay service.
 package worker
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/devaloi/hookrelay/internal/signature"
 )
 
+// DeliveryResult contains the outcome of a delivery attempt.
 type DeliveryResult struct {
 	Success    bool
 	StatusCode int
@@ -20,17 +22,19 @@ type DeliveryResult struct {
 	Error      error
 }
 
+// Deliverer handles HTTP delivery of webhooks to target endpoints.
 type Deliverer struct {
 	client *http.Client
 	cfg    *config.Config
 	logger *slog.Logger
 }
 
+// NewDeliverer creates a new deliverer with the given configuration.
 func NewDeliverer(cfg *config.Config, logger *slog.Logger) *Deliverer {
 	return &Deliverer{
 		client: &http.Client{
 			Timeout: cfg.DeliveryTimeout,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			CheckRedirect: func(_ *http.Request, via []*http.Request) error {
 				if len(via) >= 3 {
 					return fmt.Errorf("too many redirects")
 				}
@@ -42,6 +46,7 @@ func NewDeliverer(cfg *config.Config, logger *slog.Logger) *Deliverer {
 	}
 }
 
+// Deliver attempts to deliver a webhook to its target endpoint.
 func (d *Deliverer) Deliver(item *domain.DeliveryWithWebhook) *DeliveryResult {
 	ctx, cancel := context.WithTimeout(context.Background(), d.cfg.DeliveryTimeout)
 	defer cancel()
@@ -65,7 +70,7 @@ func (d *Deliverer) Deliver(item *domain.DeliveryWithWebhook) *DeliveryResult {
 	if err != nil {
 		return &DeliveryResult{Success: false, Error: fmt.Errorf("executing request: %w", err)}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024))
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package main provides the entry point for the hookrelay webhook relay service.
 package main
 
 import (
@@ -28,7 +29,7 @@ func main() {
 		logger.Error("failed to initialize store", "error", err)
 		os.Exit(1)
 	}
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

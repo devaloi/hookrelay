@@ -1,3 +1,4 @@
+// Package handler provides HTTP request handlers for the webhook relay service.
 package handler
 
 import (
@@ -11,11 +12,13 @@ import (
 	"github.com/devaloi/hookrelay/internal/queue"
 )
 
+// AdminHandler handles administrative API endpoints for managing endpoints and viewing deliveries.
 type AdminHandler struct {
 	store  queue.Store
 	logger *slog.Logger
 }
 
+// NewAdminHandler creates a new admin handler with the given store and logger.
 func NewAdminHandler(store queue.Store, logger *slog.Logger) *AdminHandler {
 	return &AdminHandler{store: store, logger: logger}
 }
@@ -184,11 +187,13 @@ func (h *AdminHandler) handleRetryDLQ(w http.ResponseWriter, r *http.Request, id
 	writeJSON(w, http.StatusOK, map[string]string{"message": "delivery moved from DLQ to pending"})
 }
 
+// StatsHandler handles requests for queue statistics.
 type StatsHandler struct {
 	store  queue.Store
 	logger *slog.Logger
 }
 
+// NewStatsHandler creates a new stats handler.
 func NewStatsHandler(store queue.Store, logger *slog.Logger) *StatsHandler {
 	return &StatsHandler{store: store, logger: logger}
 }

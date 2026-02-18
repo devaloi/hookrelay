@@ -31,7 +31,7 @@ func TestDeliverer(t *testing.T) {
 				t.Error("expected X-Hook-ID header")
 			}
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status":"ok"}`))
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
 		}))
 		defer server.Close()
 
@@ -53,9 +53,9 @@ func TestDeliverer(t *testing.T) {
 	})
 
 	t.Run("server returns 500", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"internal error"}`))
+			_, _ = w.Write([]byte(`{"error":"internal error"}`))
 		}))
 		defer server.Close()
 
@@ -80,7 +80,7 @@ func TestDeliverer(t *testing.T) {
 	})
 
 	t.Run("server returns 404", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		}))
 		defer server.Close()
@@ -107,7 +107,7 @@ func TestDeliverer(t *testing.T) {
 			DeliveryTimeout:  100 * time.Millisecond,
 			RetryBackoffBase: 30,
 		}
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			time.Sleep(500 * time.Millisecond)
 			w.WriteHeader(http.StatusOK)
 		}))

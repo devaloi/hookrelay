@@ -132,7 +132,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 	payloads := [][]byte{
 		[]byte(`{"event":"test"}`),
 		[]byte(`simple text`),
-		[]byte{0x00, 0x01, 0x02, 0x03},
+		{0x00, 0x01, 0x02, 0x03},
 		[]byte(`{"complex": {"nested": ["data", 123, true]}}`),
 	}
 	secrets := []string{

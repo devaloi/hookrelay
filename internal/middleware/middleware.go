@@ -1,3 +1,4 @@
+// Package middleware provides HTTP middleware components for the webhook relay service.
 package middleware
 
 import (
@@ -7,10 +8,6 @@ import (
 	"net/http"
 	"time"
 )
-
-type contextKey string
-
-const requestIDKey contextKey = "requestID"
 
 // RequestID adds a unique request ID to each request.
 func RequestID(next http.Handler) http.Handler {
@@ -26,7 +23,7 @@ func RequestID(next http.Handler) http.Handler {
 
 func generateRequestID() string {
 	bytes := make([]byte, 8)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }
 

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/devaloi/hookrelay/internal/domain"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
 // SQLiteStore implements the Store interface using SQLite.
@@ -224,7 +224,7 @@ func (s *SQLiteStore) DeleteEndpoint(id string) error {
 // Queue operations
 
 // Enqueue adds a webhook to the queue and creates a pending delivery.
-func (s *SQLiteStore) Enqueue(webhook *domain.Webhook, endpoint *domain.Endpoint) (*domain.Delivery, error) {
+func (s *SQLiteStore) Enqueue(webhook *domain.Webhook, _ *domain.Endpoint) (*domain.Delivery, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

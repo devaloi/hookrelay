@@ -11,6 +11,7 @@ import (
 	"github.com/devaloi/hookrelay/internal/queue"
 )
 
+// Dispatcher polls the queue and dispatches deliveries to the deliverer.
 type Dispatcher struct {
 	store     queue.Store
 	deliverer *Deliverer
@@ -20,6 +21,7 @@ type Dispatcher struct {
 	wg        sync.WaitGroup
 }
 
+// NewDispatcher creates a new dispatcher with the given store and configuration.
 func NewDispatcher(store queue.Store, cfg *config.Config, logger *slog.Logger) *Dispatcher {
 	return &Dispatcher{
 		store:     store,
@@ -30,12 +32,14 @@ func NewDispatcher(store queue.Store, cfg *config.Config, logger *slog.Logger) *
 	}
 }
 
+// Start begins polling the queue for pending deliveries.
 func (d *Dispatcher) Start(ctx context.Context) {
 	d.wg.Add(1)
 	go d.run(ctx)
 	d.logger.Info("dispatcher started", "interval", d.cfg.WorkerInterval)
 }
 
+// Stop gracefully stops the dispatcher, waiting for in-progress deliveries.
 func (d *Dispatcher) Stop() {
 	close(d.stopCh)
 	d.wg.Wait()
