@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/devaloi/hookrelay/internal/domain"
 )
@@ -61,10 +60,4 @@ func filterHeaders(headers map[string]string) map[string]string {
 		filtered[key] = value
 	}
 	return filtered
-}
-
-// isAllowedScheme checks whether a URL uses an allowed scheme (http or https).
-func isAllowedScheme(rawURL string) bool {
-	lower := strings.ToLower(rawURL)
-	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
 }

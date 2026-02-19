@@ -59,12 +59,12 @@ type Delivery struct {
 
 // QueueStats contains statistics about the delivery queue.
 type QueueStats struct {
-	Pending       int64   `json:"pending"`
-	Delivered     int64   `json:"delivered"`
-	Failed        int64   `json:"failed"`
-	Dead          int64   `json:"dead"`
-	TotalDelivered int64  `json:"total_delivered"`
-	SuccessRate   float64 `json:"success_rate"`
+	Pending        int64   `json:"pending"`
+	Delivered      int64   `json:"delivered"`
+	Failed         int64   `json:"failed"`
+	Dead           int64   `json:"dead"`
+	TotalDelivered int64   `json:"total_delivered"`
+	SuccessRate    float64 `json:"success_rate"`
 }
 
 // DeliveryWithWebhook combines a delivery with its associated webhook data.
